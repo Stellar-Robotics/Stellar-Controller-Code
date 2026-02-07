@@ -121,6 +121,9 @@ void setup()
   r.setLeftRotationHandler(showDirection);
   r.setRightRotationHandler(showDirection);
 
+  //r.setUpperBound(LONG_MAX);
+  //r.setLowerBound(LONG_MAX);
+
   //usb_hid.enableOutEndpoint(true);
   // Setup HID
   usb_hid.setPollInterval(2);
@@ -128,7 +131,7 @@ void setup()
 
   usb_hid.setStringDescriptor("Stellar Controller");
 
-  usb_hid.setReportCallback(NULL, hid_report_callback);
+  usb_hid.setReportCallback(get_report_callback, hid_report_callback);
 
   usb_hid.begin();
 
@@ -136,8 +139,8 @@ void setup()
   while( !TinyUSBDevice.mounted() ) delay(1);
   
   Serial.println("Adafruit TinyUSB HID Gamepad example");
+  gp.z = -127;
 }
-
 void loop() 
 {
   r.loop();
@@ -180,6 +183,16 @@ void printBin(byte aByte) {
     Serial.write(bitRead(aByte, aBit) ? '1' : '0');
 }
 
+uint16_t get_report_callback (uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen)
+{
+  // not used in this example
+  (void) report_id;
+  (void) report_type;
+  (void) buffer;
+  (void) reqlen;
+  return 0;
+}
+
 // Invoked when received SET_REPORT control request or
 // received data on OUT endpoint ( Report ID = 0, Type = 0 )
 void hid_report_callback(uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize)
@@ -202,13 +215,13 @@ void hid_report_callback(uint8_t report_id, hid_report_type_t report_type, uint8
 }
 
 void rotate(Rotary& r) {
-  int Rotation = r.getPosition();
+  long Rotation = r.getPosition();
   if (Rotation >=0) {
-    gp.rz = map(Rotation%1024, 0, 1024, 127, -127);
-    Serial.println(gp.rz);
+    gp.z = map(Rotation%2048, 0, 2048, 127, -127);
+    Serial.println(gp.z);
   } else {
-    gp.rz = map(1024+(Rotation%1024), 0, 1024, 127, -127);
-    Serial.println(gp.rz);
+    gp.z = map(2048+(Rotation%2048), 0, 2048, 127, -127);
+    Serial.println(gp.z);
   }
   /*
    // Analog Trigger 2 UP
@@ -230,6 +243,7 @@ void rotate(Rotary& r) {
   delay(2000);
   */
    Serial.println(r.getPosition());
+   Serial.println(r.getUpperBound());
    //usb_hid.sendReport(0, &gp, sizeof(gp));
 }
 
